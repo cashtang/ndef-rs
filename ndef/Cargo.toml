@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Tang Cheng"]
 license = "MIT"
 edition = "2021"
+description = "NDEF (NFC Data Exchange Format) parser and generator in Rust"
 
 [dependencies]
 anyhow = "1.0.89"
