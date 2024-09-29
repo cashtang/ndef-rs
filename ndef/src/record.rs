@@ -316,6 +316,15 @@ impl NdefRecordBuilder {
                 payload: vec![],
             })
         } else {
+            if self.record_type.len() > 0xff {
+                return Err(anyhow!("record type too long"));
+            }
+            if let Some(id) = self.id.as_ref() {
+                if id.len() > 0xff {
+                    return Err(anyhow!("record id too long"));
+                }
+            }
+
             Ok(NdefRecord {
                 flags: self.flags,
                 tnf: self.tnf,
