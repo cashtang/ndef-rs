@@ -15,7 +15,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-ndef-rs = "0.1.0"
+ndef-rs = "0.2"
 ```
 
 ## Usage

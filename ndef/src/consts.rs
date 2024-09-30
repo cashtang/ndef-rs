@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use bitflags::bitflags;
-use strum::{VariantArray, FromRepr};
+use strum::{FromRepr, VariantArray};
 
 macro_rules! count_args {
     () => { 0 };
@@ -61,12 +61,41 @@ define_const_array!(
     (HTTPS_WWW, UriAbbrev(0x02, "https://www.")),
     (HTTP, UriAbbrev(0x03, "http://")),
     (HTTPS, UriAbbrev(0x04, "https://")),
+    (TEL, UriAbbrev(0x05, "tel:")),
+    (MAILTO, UriAbbrev(0x06, "mailto:")),
+    (FTP_ANONYMOUS, UriAbbrev(0x07, "ftp://anonymous:anonymous@")),
+    (FTP_FTP, UriAbbrev(0x08, "ftp://ftp.")),
+    (FTPS, UriAbbrev(0x09, "ftps://")),
+    (SFTP, UriAbbrev(0x0A, "sftp://")),
+    (SMB, UriAbbrev(0x0B, "smb://")),
+    (NFS, UriAbbrev(0x0C, "nfs://")),
+    (FTP, UriAbbrev(0x0D, "ftp://")),
+    (DAV, UriAbbrev(0x0E, "dav://")),
+    (NEWS, UriAbbrev(0x0F, "news:")),
+    (TELNET, UriAbbrev(0x10, "telnet://")),
+    (IMAP, UriAbbrev(0x11, "imap:")),
+    (RTSP, UriAbbrev(0x12, "rtsp://")),
+    (URN, UriAbbrev(0x13, "urn:")),
+    (POP, UriAbbrev(0x14, "pop:")),
+    (SIP, UriAbbrev(0x15, "sip:")),
+    (SIPS, UriAbbrev(0x16, "sips:")),
+    (TFTP, UriAbbrev(0x17, "tftp:")),
+    (BTSPP, UriAbbrev(0x18, "btspp://")),
+    (BTL2CAP, UriAbbrev(0x19, "btl2cap://")),
+    (BTGOEP, UriAbbrev(0x1A, "btgoep://")),
+    (TCPOBEX, UriAbbrev(0x1B, "tcpobex://")),
+    (IRDAOBEX, UriAbbrev(0x1C, "irdaobex://")),
+    (FILE, UriAbbrev(0x1D, "file://")),
+    (URN_EPC_ID, UriAbbrev(0x1E, "urn:epc:id:")),
+    (URN_EPC_TAG, UriAbbrev(0x1F, "urn:epc:tag:")),
+    (URN_EPC_PAT, UriAbbrev(0x20, "urn:epc:pat:")),
+    (URN_EPC_RAW, UriAbbrev(0x21, "urn:epc:raw:")),
+    (URN_EPC, UriAbbrev(0x22, "urn:epc:")),
+    (URN_NFC, UriAbbrev(0x23, "urn:nfc:")),
 );
 
 pub fn get_uri_abbreviation(abbreviation: u8) -> Option<&'static UriAbbrev> {
-    URI_ABBREVIATIONS
-        .iter()
-        .find(|abbr| abbr.0 == abbreviation)
+    URI_ABBREVIATIONS.iter().find(|abbr| abbr.0 == abbreviation)
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

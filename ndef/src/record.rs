@@ -38,7 +38,7 @@ impl NdefRecord {
         RTD_PRE_DEFINED
             .iter()
             .find(|&r| r.0 == self.record_type.as_slice())
-            .map(|r| *r)
+            .copied()
     }
 
     pub fn id(&self) -> Option<&[u8]> {
