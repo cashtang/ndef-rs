@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use bitflags::bitflags;
 use strum::{VariantArray, FromRepr};
 
@@ -121,6 +123,14 @@ impl PartialEq<[u8]> for RTD {
 impl PartialEq<Vec<u8>> for RTD {
     fn eq(&self, other: &Vec<u8>) -> bool {
         self.0 == other.as_slice()
+    }
+}
+
+impl Deref for RTD {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.0
     }
 }
 

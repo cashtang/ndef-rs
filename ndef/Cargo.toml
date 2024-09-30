@@ -10,8 +10,14 @@ description = "NDEF (NFC Data Exchange Format) parser and generator in Rust"
 anyhow = "1.0.89"
 bitflags = { version = "2.6", features = ["serde"] }
 byteorder = "1.5.0"
-iso7816-tlv = "0.4"
 strum = { version = "0.26", features = ["derive"] }
+mime = { version = "0.3", optional = true }
+thiserror = "1.0.64"
 
 [dev-dependencies]
 hex = "0.4.3"
+
+
+[features]
+default = []
+mime-payload = ["mime"]

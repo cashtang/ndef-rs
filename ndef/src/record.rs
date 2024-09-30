@@ -1,7 +1,7 @@
+use crate::payload::*;
 use crate::*;
 use anyhow::{anyhow, Result};
-use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
-use std::borrow::Cow;
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{prelude::*, Cursor};
 
 #[derive(Debug, Clone)]
@@ -15,81 +15,6 @@ pub struct NdefRecord {
     id: Option<Vec<u8>>,
     /// The payload field of the record.
     payload: Vec<u8>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct RecordUri {
-    abbrev: UriAbbrev,
-    uri: Cow<'static, str>,
-}
-
-impl RecordUri {
-    pub fn static_with_abbrev(abbrev: UriAbbrev, uri: &'static str) -> Self {
-        Self {
-            abbrev,
-            uri: Cow::Borrowed(uri),
-        }
-    }
-
-    pub fn from_static(uri: &'static str) -> Self {
-        let (abbrev, uri) = Self::guess_abbrev(uri);
-        Self {
-            abbrev,
-            uri: Cow::Borrowed(uri),
-        }
-    }
-
-    pub fn with_abbrev<T: Into<String>>(abbrev: UriAbbrev, uri: T) -> Self {
-        Self {
-            abbrev,
-            uri: Cow::Owned(uri.into()),
-        }
-    }
-
-    pub fn from_string<T: Into<String>>(uri: T) -> Self {
-        let uri = uri.into();
-        let (abbrev, uri) = Self::guess_abbrev(&uri);
-        Self {
-            abbrev,
-            uri: Cow::Owned(uri.to_owned()),
-        }
-    }
-
-    fn guess_abbrev<'a>(uri: &'a str) -> (UriAbbrev, &'a str) {
-        for abbr in URI_ABBREVIATIONS.iter() {
-            if abbr == &NONE_ABBRE {
-                continue;
-            }
-            if uri.starts_with(abbr.1) {
-                return (*abbr, &uri[abbr.1.len()..]);
-            }
-        }
-        (NONE_ABBRE, uri)
-    }
-
-    pub fn abbreviation(&self) -> UriAbbrev {
-        self.abbrev.clone()
-    }
-
-    pub fn uri(&self) -> &str {
-        &self.uri
-    }
-    
-    pub fn full_uri(&self) -> String {
-        if self.abbrev == NONE_ABBRE {
-            return self.uri.to_string();
-        }
-        format!("{}{}", self.abbrev.as_uri(), self.uri)
-    }
-}
-
-impl From<RecordUri> for Vec<u8> {
-    fn from(record: RecordUri) -> Vec<u8> {
-        let mut buffer = vec![];
-        buffer.push(record.abbrev.as_byte());
-        buffer.extend_from_slice(record.uri.as_bytes());
-        buffer
-    }
 }
 
 #[allow(dead_code)]
@@ -115,23 +40,6 @@ impl NdefRecord {
 
     pub fn payload(&self) -> &[u8] {
         &self.payload
-    }
-
-    pub fn uri_payload(&self) -> Option<RecordUri> {
-        if self.payload.is_empty() {
-            return None;
-        }
-        if RTD_URI == self.record_type {
-            let abbrev = get_uri_abbreviation(self.payload[0]).map(|a| a.clone());
-            if abbrev.is_none() {
-                return None;
-            }
-            let abbrev = abbrev.unwrap();
-            let uri = std::str::from_utf8(&self.payload[1..]).ok()?;
-            Some(RecordUri::with_abbrev(abbrev, uri))
-        } else {
-            None
-        }
     }
 
     pub fn clear_begin(&mut self) {
@@ -284,21 +192,18 @@ impl NdefRecordBuilder {
         self
     }
 
-    pub fn payload<T, U>(mut self, record_type: T, payload: U) -> Self
+    pub fn payload<P>(mut self, payload: &P) -> Self
     where
-        T: Into<Vec<u8>>,
-        U: Into<Vec<u8>>,
+        P: RecordPayload,
     {
-        self.payload = payload.into();
-        self.record_type = record_type.into();
+        self.record_type = payload.record_type().to_vec();
+        self.payload = payload.payload().to_vec();
         if self.payload.len() < 256 {
             self.flags |= RecordFlags::SR;
+        } else {
+            self.flags &= !RecordFlags::SR;
         }
         self
-    }
-
-    pub fn uri_payload(self, uri: RecordUri) -> Self {
-        self.payload(RTD_URI, uri)
     }
 
     pub fn build(self) -> Result<NdefRecord> {

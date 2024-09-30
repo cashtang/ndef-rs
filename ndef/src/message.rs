@@ -81,43 +81,22 @@ impl NdefMessage {
 mod tests {
 
     use crate::message::NdefMessage;
-    use crate::record::{NdefRecord, RecordUri};
+    use crate::record::NdefRecord;
+    use crate::payload::*;
     use crate::*;
 
-    #[test]
-    fn test_record_uri() {
-        let uri = RecordUri::from_static("https://www.sina.com.cn");
-        assert_eq!(HTTPS_WWW, uri.abbreviation());
-        assert_eq!(uri.uri(), "sina.com.cn");
-
-        let uri = RecordUri::static_with_abbrev(HTTPS_WWW, "sina.com.cn");
-        assert_eq!(HTTPS_WWW, uri.abbreviation());
-        assert_eq!(uri.uri(), "sina.com.cn");
-
-        let uri = RecordUri::static_with_abbrev(HTTP_WWW, "http://www.baidu.com");
-        assert_eq!(HTTP_WWW, uri.abbreviation());
-        assert_eq!("http://www.baidu.com", uri.uri());
-
-        let uri = RecordUri::from_string("https://www.google.com");
-        assert_eq!(HTTPS_WWW, uri.abbreviation());
-        assert_eq!("google.com", uri.uri());
-
-        let uri = RecordUri::from_static("weixin://dl/12321");
-        assert_eq!(NONE_ABBRE, uri.abbreviation());
-        assert_eq!("weixin://dl/12321", uri.uri());
-    }
-
+    
     #[test]
     fn test_multiple_records() {
         let record1 = NdefRecord::builder()
             .tnf(TNF::WellKnown)
-            .uri_payload(RecordUri::from_static("weixin://dl/business"))
+            .payload(&UriPayload::from_static("weixin://dl/business"))
             .build()
             .unwrap();
 
         let record2 = NdefRecord::builder()
             .tnf(TNF::External)
-            .payload(b"android.com:pkg", b"com.tencent.mm")
+            .payload(&ExternalPayload::from_static(b"android.com:pkg", b"com.tencent.mm"))
             .build()
             .unwrap();
 
@@ -134,7 +113,7 @@ mod tests {
         let record = message.records().get(0).unwrap();
         assert_eq!(TNF::WellKnown, record.tnf());
         assert_eq!(RTD_URI.as_bytes(), record.record_type());
-        let payload = record.uri_payload().unwrap();
+        let payload = UriPayload::try_from(record).unwrap();
         assert_eq!(NONE_ABBRE, payload.abbreviation());
         assert_eq!("weixin://dl/business", payload.uri());
         assert_eq!("weixin://dl/business", payload.full_uri());
@@ -144,7 +123,7 @@ mod tests {
         assert_eq!(b"android.com:pkg", record.record_type());
         assert_eq!(b"com.tencent.mm", record.payload());
 
-        assert_eq!(None, record.uri_payload());
+        assert!(UriPayload::try_from(record).is_err());
 
     }
 
@@ -152,7 +131,7 @@ mod tests {
     fn test_single_record() {
         let record = NdefRecord::builder()
             .tnf(TNF::WellKnown)
-            .uri_payload(RecordUri::with_abbrev(
+            .payload(&UriPayload::with_abbrev(
                 HTTP_WWW,
                 "supwisdom.com".to_string(),
             ))
@@ -167,7 +146,7 @@ mod tests {
         let record = message.records().get(0).unwrap();
         assert_eq!(TNF::WellKnown , record.tnf());
         assert_eq!(RTD_URI.as_bytes(), record.record_type());
-        let payload = record.uri_payload().unwrap();
+        let payload = UriPayload::try_from(record).unwrap();
         assert_eq!(HTTP_WWW, payload.abbreviation());
         assert_eq!("supwisdom.com", payload.uri());
         assert_eq!("http://www.supwisdom.com", payload.full_uri());
@@ -177,12 +156,12 @@ mod tests {
     fn test_not_sr() {
         let record = NdefRecord::builder()
             .tnf(TNF::External)
-            .payload(RTD_TEXT, [0xab; 300])
+            .payload(&SmartPosterPayload::from_static(&[0xabu8; 300]))
             .build()
             .unwrap();
         let message = NdefMessage::from(record);
         let buffer = message.to_buffer().unwrap();
-        let expect = "c4012c01000054abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab";
+        let expect = "c4022c0100005370abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab";
         assert_eq!(expect, hex::encode(buffer));
     }
 }

@@ -233,18 +233,19 @@ mod tests {
     #[test]
     fn test_ndef_message() {
         use super::*;
-        use crate::record::{NdefRecord, RecordUri};
+        use crate::record::NdefRecord;
         use crate::*;
+        use crate::payload::*;
 
         let record1 = NdefRecord::builder()
             .tnf(TNF::WellKnown)
-            .uri_payload(RecordUri::from_static("weixin://dl/business"))
+            .payload(&UriPayload::from_static("weixin://dl/business"))
             .build()
             .unwrap();
 
         let record2 = NdefRecord::builder()
             .tnf(TNF::External)
-            .payload(b"android.com:pkg", b"com.tencent.mm")
+            .payload(&ExternalPayload::from_static(b"android.com:pkg", b"com.tencent.mm"))
             .build()
             .unwrap();
 
