@@ -23,22 +23,26 @@ ndef-rs = "0.1.0"
 Here is a simple example of how to use `ndef-rs`:
 
 ```rust
-extern crate ndef_rs;
 
-use ndef_rs::NdefMessage;
-use ndef_rs::record::TextRecord;
+use ndef_rs::{NdefMessage, NdefRecord};
+use ndef_rs::payload::TextPayload;
 
 fn main() {
   // Create a new NDEF message
-  let text_record = TextRecord::new("Hello, world!", "en");
-  let ndef_message = NdefMessage::new(vec![text_record.into()]);
+  let payload = TextPayload::from_static("Hello, world!");
+  let record = NdefRecord::builder()
+                  .tnf(TNF::WellKnown)
+                  .payload(&payload)
+                  .build()
+                  .unwrap();
+  let ndef_message = NdefMessage::from(&[text_record]);
 
   // Convert the NDEF message to bytes
-  let bytes = ndef_message.to_bytes().unwrap();
+  let bytes = ndef_message.to_buffer().unwrap();
   println!("{:?}", bytes);
 
   // Parse the NDEF message from bytes
-  let parsed_message = NdefMessage::from_bytes(&bytes).unwrap();
+  let parsed_message = NdefMessage::decode(&bytes).unwrap();
   println!("{:?}", parsed_message);
 }
 ```

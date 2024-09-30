@@ -2,7 +2,7 @@ use crate::{record::NdefRecord, *};
 use anyhow::{bail, Result};
 use std::io::Cursor;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct NdefMessage {
     records: Vec<NdefRecord>,
 }
