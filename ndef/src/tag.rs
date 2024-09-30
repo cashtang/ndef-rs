@@ -75,17 +75,17 @@ impl TlvValue {
         let mut writer = Cursor::new(buffer);
         writer.write_u8(self.tag as u8).unwrap();
         if let Some(value) = &self.value {
-            if value.len() == 0 {
+            if value.is_empty() {
                 writer.write_u8(0x00).unwrap();
             } else if value.len() < 0xff {
                 writer.write_u8(value.len() as u8).unwrap();
-                writer.write_all(&value).unwrap();
+                writer.write_all(value).unwrap();
             } else {
                 writer.write_u8(0xff).unwrap();
                 writer
                     .write_u16::<LittleEndian>(value.len() as u16)
                     .unwrap();
-                writer.write_all(&value).unwrap();
+                writer.write_all(value).unwrap();
             }
         }
         writer.into_inner()
@@ -122,8 +122,7 @@ impl NFT2Tag {
         let buffer = self
             .tlvs
             .iter()
-            .map(|v| v.to_bytes())
-            .flatten()
+            .flat_map(|v| v.to_bytes())
             .collect::<Vec<_>>();
         if self.capacity_in_bytes() < (buffer.len() as u16) {
             return Err(anyhow::anyhow!("Invalid memory size"));

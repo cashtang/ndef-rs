@@ -179,7 +179,7 @@ impl NdefRecordBuilder {
     }
 
     pub fn id(mut self, id: Vec<u8>) -> Self {
-        if id.len() == 0 {
+        if id.is_empty() {
             return self;
         }
         self.id = Some(id);

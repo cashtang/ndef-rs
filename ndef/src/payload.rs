@@ -53,15 +53,15 @@ impl UriPayload {
             if abbr == &NONE_ABBRE {
                 continue;
             }
-            if uri.starts_with(abbr.1) {
-                return (*abbr, &uri[abbr.1.len()..]);
+            if let Some(left) = uri.strip_prefix(abbr.1) {
+                return (*abbr, left)
             }
         }
         (NONE_ABBRE, uri)
     }
 
     pub fn abbreviation(&self) -> UriAbbrev {
-        self.abbrev.clone()
+        self.abbrev
     }
 
     pub fn uri(&self) -> &str {
@@ -87,10 +87,10 @@ impl TryFrom<&NdefRecord> for UriPayload {
             return Err(NdefError::InvalidRecordType);
         }
         let payload = record.payload();
-        let abbrev = get_uri_abbreviation(payload[0]).unwrap_or_else(|| &NONE_ABBRE);
+        let abbrev = get_uri_abbreviation(payload[0]).unwrap_or( &NONE_ABBRE);
         let uri = std::str::from_utf8(&payload[1..]).map_err(|_| NdefError::InvalidEncoding)?;
         Ok(UriPayload {
-            abbrev: abbrev.clone(),
+            abbrev: *abbrev,
             uri: Cow::Owned(uri.to_string()),
         })
     }
@@ -133,6 +133,10 @@ impl TextPayload {
             text: Cow::Owned(text.into()),
         }
     }
+    
+    pub fn text(&self) -> &str {
+        &self.text
+    }
 }
 
 impl RecordPayload for TextPayload {
@@ -156,7 +160,7 @@ impl TryFrom<&NdefRecord> for TextPayload {
             return Err(NdefError::InvalidRecordType);
         }
         let payload = record.payload();
-        let text = std::str::from_utf8(&payload).map_err(|_| NdefError::InvalidEncoding)?;
+        let text = std::str::from_utf8(payload).map_err(|_| NdefError::InvalidEncoding)?;
         Ok(TextPayload {
             text: Cow::Owned(text.to_string()),
         })
@@ -279,7 +283,7 @@ impl MimePayload {
 #[cfg(feature = "mime")]
 impl RecordPayload for MimePayload {
     fn record_type(&self) -> Cow<'_, [u8]> {
-        Cow::Owned(self.mime_type.type_().as_ref().as_bytes().to_vec())
+        Cow::Borrowed(self.mime_type.essence_str().as_bytes())
     }
 
     fn payload(&self) -> Cow<'_, [u8]> {
@@ -341,6 +345,15 @@ mod tests {
         let text = TextPayload::from_static("Hello, World!");
         assert_eq!(RTD_TEXT.as_bytes(), text.record_type().as_ref());
         assert_eq!(b"Hello, World!", text.payload().as_ref());
+
+        let record = NdefRecord::builder()
+            .tnf(TNF::WellKnown)
+            .payload(&text)
+            .build()
+            .unwrap();
+        let payload = TextPayload::try_from(&record).unwrap();
+        assert_eq!("Hello, World!", payload.text());
+        assert_eq!(b"Hello, World!", payload.payload().as_ref());
     }
 
     #[test]
@@ -348,6 +361,33 @@ mod tests {
         let sp = SmartPosterPayload::from_static(&[0x00, 0x01, 0x02, 0x03]);
         assert_eq!(RTD_SMART_POSTER.as_bytes(), sp.record_type().as_ref());
         assert_eq!(&[0x00, 0x01, 0x02, 0x03], sp.payload().as_ref());
+
+        let record = NdefRecord::builder()
+            .tnf(TNF::WellKnown)
+            .payload(&sp)
+            .build()
+            .unwrap();
+
+        let payload = SmartPosterPayload::try_from(&record).unwrap();
+        assert_eq!(&[0x00, 0x01, 0x02, 0x03], payload.payload().as_ref());
+    }
+    #[cfg(feature = "mime")]
+    #[test]
+    fn test_mime() {
+        let mime = "text/plain".parse().unwrap();
+        let payload = MimePayload::from_mime(mime, "Hello, World!");
+        assert_eq!(b"text/plain", payload.record_type().as_ref());
+        assert_eq!(b"Hello, World!", payload.payload().as_ref());
+
+        let record = NdefRecord::builder()
+            .tnf(TNF::MimeMedia)
+            .payload(&payload)
+            .build()
+            .unwrap();
+
+        let payload = MimePayload::try_from(&record).unwrap();
+        assert_eq!("text/plain", payload.mime_type.to_string());
+        assert_eq!(b"Hello, World!", payload.payload().as_ref());
     }
 
 }

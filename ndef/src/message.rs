@@ -2,6 +2,7 @@ use crate::{record::NdefRecord, *};
 use anyhow::{bail, Result};
 use std::io::Cursor;
 
+#[derive(Default)]
 pub struct NdefMessage {
     records: Vec<NdefRecord>,
 }
@@ -26,10 +27,6 @@ where
 }
 
 impl NdefMessage {
-    pub fn new() -> Self {
-        Self { records: vec![] }
-    }
-
     pub fn add_record(&mut self, record: NdefRecord) {
         self.records.push(record);
     }
@@ -61,7 +58,7 @@ impl NdefMessage {
         let mut records = vec![];
         loop {
             let record = NdefRecord::decode(&mut reader)?;
-            if record.flags() & RecordFlags::MB == RecordFlags::MB && records.len() > 0 {
+            if record.flags() & RecordFlags::MB == RecordFlags::MB && !records.is_empty() {
                 bail!("record MB flag is set , but not first record");
             }
             let flags = record.flags();
@@ -76,6 +73,7 @@ impl NdefMessage {
         Ok(Self { records })
     }
 }
+
 
 #[cfg(test)]
 mod tests {

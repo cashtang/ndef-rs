@@ -17,28 +17,6 @@ macro_rules! define_const_array {
     };
 }
 
-/// The `TNF` enum represents the Type Name Format (TNF) field in an NDEF record.
-/// Each variant corresponds to a specific TNF value as defined by the NDEF specification.
-///
-/// Variants:
-/// - `Empty`: Indicates an empty record (0x00).
-/// - `WellKnown`: Indicates a well-known record type (0x01).
-/// - `MimeMedia`: Indicates a MIME media record type (0x02).
-/// - `AbsoluteUri`: Indicates an absolute URI record type (0x03).
-/// - `External`: Indicates an external record type (0x04).
-/// - `Unknown`: Indicates an unknown record type (0x05).
-/// - `Unchanged`: Indicates an unchanged record type (0x06).
-/// - `Reserved`: Reserved for future use (0x07).
-
-/// The `UriAbbreviation` enum represents abbreviations for URIs in an NDEF record.
-/// Each variant corresponds to a specific URI abbreviation as defined by the NDEF specification.
-///
-/// Variants:
-/// - `None`: No abbreviation (0x00).
-/// - `HttpWww`: Abbreviation for "http://www." (0x01).
-/// - `HttpsWww`: Abbreviation for "https://www." (0x02).
-/// - `Http`: Abbreviation for "http://" (0x03).
-/// - `Https`: Abbreviation for "https://" (0x04).
 #[derive(Debug, FromRepr, PartialEq, VariantArray, Clone, Copy)]
 #[repr(u8)]
 pub enum TNF {
@@ -97,9 +75,9 @@ pub struct RTD(pub &'static [u8]);
 define_const_array!(
     RTD_PRE_DEFINED,
     RTD,
-    (RTD_TEXT, RTD(&['T' as u8])),
-    (RTD_URI, RTD(&['U' as u8])),
-    (RTD_SMART_POSTER, RTD(&['S' as u8, 'p' as u8])),
+    (RTD_TEXT, RTD(b"T")),
+    (RTD_URI, RTD(b"U")),
+    (RTD_SMART_POSTER, RTD(b"Sp")),
 );
 
 impl RTD {
