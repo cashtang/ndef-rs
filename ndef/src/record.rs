@@ -34,6 +34,13 @@ impl NdefRecord {
         &self.record_type
     }
 
+    pub fn rtd(&self) -> Option<RTD> {
+        RTD_PRE_DEFINED
+            .iter()
+            .find(|&r| r.0 == self.record_type.as_slice())
+            .map(|r| *r)
+    }
+
     pub fn id(&self) -> Option<&[u8]> {
         self.id.as_deref()
     }
