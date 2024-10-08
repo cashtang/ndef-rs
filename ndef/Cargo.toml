@@ -5,6 +5,7 @@ authors = ["Tang Cheng"]
 license = "MIT"
 edition = "2021"
 description = "NDEF (NFC Data Exchange Format) parser and generator in Rust"
+repository = "https://github.com/cashtang/ndef-rs"
 
 [dependencies]
 anyhow = "1.0.89"
