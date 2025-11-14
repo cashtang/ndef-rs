@@ -112,8 +112,7 @@ impl NdefRecord {
 
     pub(crate) fn decode(reader: &mut dyn Read) -> Result<Self> {
         let flags = reader.read_u8().map_err(|e| anyhow!("read error, {}", e))?;
-        let tnf = TNF::from_repr(flags & 0x0f)
-            .ok_or_else(|| NdefError::InvalidTnf)?;
+        let tnf = TNF::from_repr(flags & 0x07).ok_or_else(|| NdefError::InvalidTnf)?;
         let flags = RecordFlags::from_bits_retain(flags);
 
         let type_len = reader

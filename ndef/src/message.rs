@@ -66,7 +66,7 @@ impl NdefMessage {
             if reader.position() >= total {
                 if flags & RecordFlags::ME != RecordFlags::ME {
                     bail!("record ME flag is not set")
-                } 
+                }
                 break;
             }
         }
@@ -74,16 +74,14 @@ impl NdefMessage {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
     use crate::message::NdefMessage;
-    use crate::record::NdefRecord;
     use crate::payload::*;
+    use crate::record::NdefRecord;
     use crate::*;
 
-    
     #[test]
     fn test_multiple_records() {
         let record1 = NdefRecord::builder()
@@ -94,7 +92,10 @@ mod tests {
 
         let record2 = NdefRecord::builder()
             .tnf(TNF::External)
-            .payload(&ExternalPayload::from_static(b"android.com:pkg", b"com.tencent.mm"))
+            .payload(&ExternalPayload::from_static(
+                b"android.com:pkg",
+                b"com.tencent.mm",
+            ))
             .build()
             .unwrap();
 
@@ -122,7 +123,6 @@ mod tests {
         assert_eq!(b"com.tencent.mm", record.payload());
 
         assert!(UriPayload::try_from(record).is_err());
-
     }
 
     #[test]
@@ -142,7 +142,7 @@ mod tests {
         let message = NdefMessage::decode(hex::decode(expect).unwrap()).unwrap();
         assert_eq!(1, message.records().len());
         let record = message.records().get(0).unwrap();
-        assert_eq!(TNF::WellKnown , record.tnf());
+        assert_eq!(TNF::WellKnown, record.tnf());
         assert_eq!(RTD_URI.as_bytes(), record.record_type());
         let payload = UriPayload::try_from(record).unwrap();
         assert_eq!(HTTP_WWW, payload.abbreviation());
@@ -161,5 +161,12 @@ mod tests {
         let buffer = message.to_buffer().unwrap();
         let expect = "c4022c0100005370abababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab";
         assert_eq!(expect, hex::encode(buffer));
+    }
+
+    #[test]
+    fn test_complex_structure_decode() {
+        let expect = "9c1e550469736f2e6f72673a31383031333a646576696365656e676167656d656e746d646f63d8185851a30063312e30018201d8185828a3010120042158207e5c55b2acd1cce87fe9dbcba205afe165ad7261930d5df7b1bbce7a5cd9c1430281830201a300f501f40a50fc52fb75fe8a431eaf7d34b39cbba8f8110211487315d1020b61630103424c4501046d646f635a2015036170706c69636174696f6e2f766e642e626c7565746f6f74682e6c652e6f6f62424c45021c001107f8a8bb9cb3347daf1e438afe75fb52fc";
+        let message = NdefMessage::decode(hex::decode(expect).unwrap()).unwrap();
+        assert_eq!(3, message.records().len());
     }
 }
