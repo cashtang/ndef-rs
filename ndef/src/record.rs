@@ -1,7 +1,7 @@
-use crate::{payload::*, error::NdefError};
 use crate::*;
+use crate::{error::NdefError, payload::*};
 use anyhow::anyhow;
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{prelude::*, Cursor};
 
 #[derive(Debug, Clone)]
@@ -88,7 +88,7 @@ impl NdefRecord {
                 .map_err(|_| anyhow!("Failed to write ID length"))?;
         } else {
             output
-                .write_u32::<LittleEndian>(self.payload.len() as u32)
+                .write_u32::<BigEndian>(self.payload.len() as u32)
                 .map_err(|_| anyhow!("Failed to write payload length"))?;
         }
         if let Some(id) = self.id.as_ref() {
@@ -115,23 +115,17 @@ impl NdefRecord {
         let tnf = TNF::from_repr(flags & 0x07).ok_or_else(|| NdefError::InvalidTnf)?;
         let flags = RecordFlags::from_bits_retain(flags);
 
-        let type_len = reader
-            .read_u8()
-            .map_err(|_| NdefError::InvalidTagLength)?;
+        let type_len = reader.read_u8().map_err(|_| NdefError::InvalidTagLength)?;
         let payload_len = if flags & RecordFlags::SR == RecordFlags::SR {
-            reader
-                .read_u8()
-                .map_err(|_| NdefError::InvalidPayload)? as u32
+            reader.read_u8().map_err(|_| NdefError::InvalidPayload)? as u32
         } else {
             reader
-                .read_u32::<LittleEndian>()
+                .read_u32::<BigEndian>()
                 .map_err(|_| NdefError::InvalidPayload)?
         };
 
         let id_len = if flags & RecordFlags::IL == RecordFlags::IL {
-            reader
-                .read_u8()
-                .map_err(|_| NdefError::InvalidId)?
+            reader.read_u8().map_err(|_| NdefError::InvalidId)?
         } else {
             0
         };

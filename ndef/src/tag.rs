@@ -1,6 +1,6 @@
-use byteorder::{LittleEndian, WriteBytesExt};
-use std::io::{Cursor, Write};
 use anyhow::Result;
+use byteorder::{BigEndian, WriteBytesExt};
+use std::io::{Cursor, Write};
 
 use crate::message::NdefMessage;
 
@@ -82,9 +82,7 @@ impl TlvValue {
                 writer.write_all(value).unwrap();
             } else {
                 writer.write_u8(0xff).unwrap();
-                writer
-                    .write_u16::<LittleEndian>(value.len() as u16)
-                    .unwrap();
+                writer.write_u16::<BigEndian>(value.len() as u16).unwrap();
                 writer.write_all(value).unwrap();
             }
         }
@@ -232,9 +230,9 @@ mod tests {
     #[test]
     fn test_ndef_message() {
         use super::*;
+        use crate::payload::*;
         use crate::record::NdefRecord;
         use crate::*;
-        use crate::payload::*;
 
         let record1 = NdefRecord::builder()
             .tnf(TNF::WellKnown)
@@ -244,7 +242,10 @@ mod tests {
 
         let record2 = NdefRecord::builder()
             .tnf(TNF::External)
-            .payload(&ExternalPayload::from_static(b"android.com:pkg", b"com.tencent.mm"))
+            .payload(&ExternalPayload::from_static(
+                b"android.com:pkg",
+                b"com.tencent.mm",
+            ))
             .build()
             .unwrap();
 
